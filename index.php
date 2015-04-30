@@ -14,8 +14,22 @@ $image = imagecreatefromjpeg($imgFile);
 $width = imagesx($image);
 $height = imagesy($image);
 
-$image = $trimmer->trim($image, $width, $height);
+$bounds = $trimmer->trim($image, $width, $height);
 
-imagejpeg($image, $outFile);
+$newWidth = 1 + $bounds['right'] - $bounds['left'];
+$newHeight = 1 + $bounds['bottom'] - $bounds['top'];
+
+$trimmedImage = imagecreatetruecolor($newWidth, $newHeight);
+$bgColor = imagecolorallocate(
+  $trimmedImage,
+  255,
+  255,
+  255
+);
+imagefill($trimmedImage, 0, 0, $bgColor);
+imagecopy($trimmedImage, $image, 0, 0, $bounds['left'], $bounds['top'], $newWidth, $newHeight);
+
+imagejpeg($trimmedImage, $outFile);
+
 
 echo 'Took ' . (microtime(true) - $start) . "\n";
