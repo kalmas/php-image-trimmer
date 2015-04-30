@@ -23,15 +23,15 @@ class Trimmer
 
       $newWidth = 1 + $right - $left;
       $newHeight = 1 + $bottom - $top;
-      $trimmedImage = imagecreatetruecolor($newWidth, $newHeight);
-      $bgColor = imagecolorallocate(
-          $trimmedImage,
-          $red,
-          $green,
-          $blue
-      );
-      imagefill($trimmedImage, 0, 0, $bgColor);
-      imagecopy($trimmedImage, $image, 0, 0, $left, $top, $newWidth, $newHeight);
+      // $trimmedImage = imagecreatetruecolor($newWidth, $newHeight);
+      // $bgColor = imagecolorallocate(
+      //     $trimmedImage,
+      //     $red,
+      //     $green,
+      //     $blue
+      // );
+      // imagefill($trimmedImage, 0, 0, $bgColor);
+      // imagecopy($trimmedImage, $image, 0, 0, $left, $top, $newWidth, $newHeight);
 
       return $trimmedImage;
   }
