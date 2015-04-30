@@ -10,101 +10,106 @@ class Trimmer
       $this->image = $image;
       $this->actualWidth = $width;
       $this->actualHeight = $height;
-
-      $this->meridian = $width / 2;
-      $this->equator = $height / 2;
-
       $this->bgColor = $bgColor;
 
-      $top = $this->getTopBound($bgColor);
-      $bottom = $this->getBottomBound($bgColor);
-      $left = $this->getLeftBound($bgColor);
-      $right = $this->getRightBound($bgColor);
+      $test = function ($x, $y) use ($image, $bgColor)
+      {
+        $color = imagecolorat($image, $x, $y);
+        return $color == $bgColor;
+      };
+
+      $testAtX = function ($x, $interval) use ($test, $height)
+      {
+        echo $x . " ";
+        for ($y = 0; $y < $height; $y = $y + $interval) {
+          if (! $test($x, $y)) {
+            return false;
+          }
+        }
+
+        return true;
+      };
+
+      $testAtY = function ($y, $interval) use ($test, $width)
+      {
+        echo $y . " ";
+        for ($x = 0; $x < $width; $x = $x + $interval) {
+          if (! $test($x, $y)) {
+            return false;
+          }
+        }
+
+        return true;
+      };
+
+      $left = $this->getLow($width, $testAtX);
+      echo "Left {$left} \n";
+
+      $right = $this->getHigh($width, $testAtX);
+      echo "Right {$right} \n";
+
+      $top = $this->getLow($height, $testAtY);
+      echo "Top {$top} \n";
+
+      $bottom = $this->getHigh($height, $testAtY);
+      echo "Bottom {$bottom} \n";
 
       $newWidth = 1 + $right - $left;
       $newHeight = 1 + $bottom - $top;
-      // $trimmedImage = imagecreatetruecolor($newWidth, $newHeight);
-      // $bgColor = imagecolorallocate(
-      //     $trimmedImage,
-      //     $red,
-      //     $green,
-      //     $blue
-      // );
-      // imagefill($trimmedImage, 0, 0, $bgColor);
-      // imagecopy($trimmedImage, $image, 0, 0, $left, $top, $newWidth, $newHeight);
+
+      $trimmedImage = imagecreatetruecolor($newWidth, $newHeight);
+      $bgColor = imagecolorallocate(
+          $trimmedImage,
+          $red,
+          $green,
+          $blue
+      );
+      imagefill($trimmedImage, 0, 0, $bgColor);
+      imagecopy($trimmedImage, $image, 0, 0, $left, $top, $newWidth, $newHeight);
 
       return $trimmedImage;
   }
 
 
-  private function test($x, $y)
+  private function getLow($max, $test)
   {
-    $color = imagecolorat($this->image, $x, $y);
-    return $color == $this->bgColor;
-  }
-
-  private function testAtX($x)
-  {
-    for($y = 0; $y < $this->actualHeight; $y++) {
-      if (! $this->test($x, $y)) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  private function getLeftBound($bgColor)
-  {
-    $x = $this->actualWidth / 2;
-
+    $interval = $max / 50;
     // While not a clear meridian, bisect.
-    while(! $this->testAtX($x))
-    {
-      $x = $x / 2;
+    $distance = $max / 2;
+    $v = $distance;
+    while (! $test($v, $interval)) {
+      $distance = $distance / 2;
+      $v = $distance;
     }
 
     // Step back up until we find blocked meridian.
-    $x = $x + 1;
-    while($this->testAtX($x))
-    {
-      $x = $x + 1;
+    $v = $v + 1;
+    while ($test($v, $interval)) {
+      $v = $v + 1;
     }
 
-    return $x - 1;
+    return $v - 1;
   }
 
-  private function getRightBound($bgColor) {
-      for($x = $this->actualWidth - 1; $x >= 0; --$x) {
-          for($y = 0; $y < $this->actualHeight; ++$y) {
-              $color = imagecolorat($this->image, $x, $y);
-              if ($color !== $bgColor) {
-                  return $x;
-              }
-          }
-      }
-  }
+  private function getHigh($max, $test)
+  {
+    $interval = $max / 50;
 
-  private function getTopBound($bgColor) {
-      for($y = 0; $y < $this->actualHeight; ++$y) {
-          for($x = 0; $x < $this->actualWidth; ++$x) {
-              $color = imagecolorat($this->image, $x, $y);
-              if ($color !== $bgColor) {
-                  return $y;
-              }
-          }
-      }
-  }
+    // While not a clear meridian, bisect.
+    $distance = $max / 2;
+    $v = $max - $distance;
+    while (! $test($v, $interval)) {
+      $distance = $distance / 2;
+      $v = $max - $distance;
+    }
 
-  private function getBottomBound($bgColor) {
-      for($y = $this->actualHeight - 1; $y >= 0; --$y) {
-          for($x = 0; $x < $this->actualWidth; ++$x) {
-              $color = imagecolorat($this->image, $x, $y);
-              if ($color !== $bgColor) {
-                  return $y;
-              }
-          }
-      }
+    // Step back down until we find blocked meridian.
+    $v = $v - 1;
+    while ($test($v, $interval)) {
+      $v = $v - 1;
+    }
+
+    return $v + 1;
   }
 
 }
