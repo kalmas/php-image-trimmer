@@ -3,7 +3,7 @@
 class Trimmer
 {
 
-    public function trim($image, $width, $height, $red = 255, $green = 255, $blue = 255)
+    public function getBounds($image, $width, $height, $red = 255, $green = 255, $blue = 255)
     {
         $bgColor = imagecolorexact($image, $red, $green, $blue);
 
@@ -47,8 +47,7 @@ class Trimmer
               return false;
             }
 
-            // Sample at hundredths.
-            if (! $testAtLocationFunc($location, ceil($rangeMax / 100))) {
+            if (! $testAtLocationFunc($location, ceil($rangeMax / 300))) {
                 return false;
             }
 
@@ -69,7 +68,12 @@ class Trimmer
     {
         $distance = $max / 2;
         $loc = $distance;
-        while (($loc > 1) && ! $matchFunc($loc, $otherMax, $testAtLocationFunc)) {
+        while (! $matchFunc($loc, $otherMax, $testAtLocationFunc)) {
+            if ($loc < 1) {
+                // Reached the edge.
+                return 0;
+            }
+
             $distance = $distance / 2;
             $loc = $distance;
         }
@@ -79,14 +83,19 @@ class Trimmer
             $loc = $loc + 1;
         }
 
-        return $loc - 1;
+        return (int) floor($loc);
     }
 
     private function getHigh($max, $otherMax, $matchFunc, $testAtLocationFunc)
     {
         $distance = $max / 2;
         $loc = $max - $distance;
-        while (($loc < ($max - 1)) && ! $matchFunc($loc, $otherMax, $testAtLocationFunc)) {
+        while (! $matchFunc($loc, $otherMax, $testAtLocationFunc)) {
+            if ($loc > ($max - 1)) {
+                // Reached the edge.
+                return $max;
+            }
+
             $distance = $distance / 2;
             $loc = $max - $distance;
         }
@@ -96,6 +105,6 @@ class Trimmer
             $loc = $loc - 1;
         }
 
-        return $loc + 1;
+        return (int) floor($loc);
     }
 }
