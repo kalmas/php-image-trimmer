@@ -3,7 +3,7 @@
 $rootPath = dirname(__FILE__);
 require_once $rootPath . '/Trimmer.php';
 
-$imgFile = $rootPath . '/bike.jpg';
+$imgFile = $rootPath . '/fp.jpg';
 $outFile = $rootPath . '/out.jpg';
 
 $start = microtime(true);

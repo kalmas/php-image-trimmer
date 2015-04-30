@@ -20,8 +20,9 @@ class Trimmer
 
       $testAtX = function ($x, $interval) use ($test, $height)
       {
-        echo $x . " ";
-        for ($y = 0; $y < $height; $y = $y + $interval) {
+        // echo 'x' . $x . " ";
+
+        for ($y = $interval; $y < $height; $y = $y + $interval) {
           if (! $test($x, $y)) {
             return false;
           }
@@ -32,8 +33,9 @@ class Trimmer
 
       $testAtY = function ($y, $interval) use ($test, $width)
       {
-        echo $y . " ";
-        for ($x = 0; $x < $width; $x = $x + $interval) {
+        // echo 'y' . $y . " ";
+
+        for ($x = $interval; $x < $width; $x = $x + $interval) {
           if (! $test($x, $y)) {
             return false;
           }
@@ -42,16 +44,31 @@ class Trimmer
         return true;
       };
 
-      $left = $this->getLow($width, $testAtX);
+      $matchFunc = function ($location, $rangeMax, $testAtLocationFunc) use ($test)
+      {
+        // Sample fifths.
+        if (! $testAtLocationFunc($location, ceil($rangeMax / 5))) {
+          return false;
+        }
+
+        // Sample at hundredths.
+        if (! $testAtLocationFunc($location, ceil($rangeMax / 100))) {
+            return false;
+        }
+
+        return true;
+      };
+
+      $left = $this->getLow($width, $height, $matchFunc, $testAtX);
       echo "Left {$left} \n";
 
-      $right = $this->getHigh($width, $testAtX);
+      $right = $this->getHigh($width, $height, $matchFunc, $testAtX);
       echo "Right {$right} \n";
 
-      $top = $this->getLow($height, $testAtY);
+      $top = $this->getLow($height, $height, $matchFunc, $testAtY);
       echo "Top {$top} \n";
 
-      $bottom = $this->getHigh($height, $testAtY);
+      $bottom = $this->getHigh($height, $height, $matchFunc, $testAtY);
       echo "Bottom {$bottom} \n";
 
       $newWidth = 1 + $right - $left;
@@ -71,41 +88,38 @@ class Trimmer
   }
 
 
-  private function getLow($max, $test)
+  private function getLow($max, $otherMax, $matchFunc, $testAtLocationFunc)
   {
-    $interval = $max / 50;
-    // While not a clear meridian, bisect.
+    // While not a matching intersection, bisect.
     $distance = $max / 2;
-    $v = $distance;
-    while (! $test($v, $interval)) {
+    $loc = $distance;
+    while (($loc > 1) && ! $matchFunc($loc, $otherMax, $testAtLocationFunc)) {
       $distance = $distance / 2;
-      $v = $distance;
+      $loc = $distance;
     }
 
     // Step back up until we find blocked meridian.
-    $v = $v + 1;
-    while ($test($v, $interval)) {
-      $v = $v + 1;
+    $loc = $loc + 1;
+    while ($matchFunc($loc, $otherMax, $testAtLocationFunc)) {
+      $loc = $loc + 1;
     }
 
-    return $v - 1;
+    return $loc - 1;
   }
 
-  private function getHigh($max, $test)
+  private function getHigh($max, $otherMax, $matchFunc, $testAtLocationFunc)
   {
-    $interval = $max / 50;
-
     // While not a clear meridian, bisect.
     $distance = $max / 2;
     $v = $max - $distance;
-    while (! $test($v, $interval)) {
+    while (($v < ($max - 1)) && ! $matchFunc($v, $otherMax, $testAtLocationFunc)) {
       $distance = $distance / 2;
       $v = $max - $distance;
     }
 
     // Step back down until we find blocked meridian.
     $v = $v - 1;
-    while ($test($v, $interval)) {
+    while ($matchFunc($v, $otherMax, $testAtLocationFunc)) {
       $v = $v - 1;
     }
 
