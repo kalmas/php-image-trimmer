@@ -54,6 +54,15 @@ class Trimmer
             return true;
         };
 
+        if(! $test(0, 0)) {
+            return [
+                'left' => 0,
+                'right' => $width,
+                'top' => 0,
+                'bottom' => $height
+            ];
+        }
+
         $bounds = [];
         $bounds['left'] = $this->getLow($width, $height, $matchFunc, $testAtX);
         $bounds['right'] = $this->getHigh($width, $height, $matchFunc, $testAtX);

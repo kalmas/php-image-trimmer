@@ -30,8 +30,8 @@ class TrimmerTest extends PHPUnit_Framework_TestCase
 
         $bounds = $this->trimmer->getBounds($image, $width, $height);
 
-        // $duration = microtime(true) - $start;
-        // echo $duration;
+        $duration = microtime(true) - $start;
+        echo $duration . "\n";
 
         // $this->assertLessThan(0, $duration);
 
@@ -54,8 +54,8 @@ class TrimmerTest extends PHPUnit_Framework_TestCase
 
         $bounds = $this->trimmer->getBounds($image, $width, $height);
 
-        // $duration = microtime(true) - $start;
-        // echo $duration;
+        $duration = microtime(true) - $start;
+        echo $duration . "\n";
 
         // $this->assertLessThan(0, $duration);
 
@@ -64,6 +64,102 @@ class TrimmerTest extends PHPUnit_Framework_TestCase
             'right' => 1351,
             'top' => 0,
             'bottom' => 431
+        ];
+        $this->assertEquals($expected, $bounds);
+    }
+
+    public function testOnBoxImage()
+    {
+        $image = imagecreatefromjpeg($this->imgPath . '/box.jpg');
+        $width = imagesx($image);
+        $height = imagesy($image);
+
+        $start = microtime(true);
+
+        $bounds = $this->trimmer->getBounds($image, $width, $height);
+
+        $duration = microtime(true) - $start;
+        echo $duration . "\n";
+
+        // $this->assertLessThan(0, $duration);
+
+        $expected = [
+            'left' => 1381,
+            'right' => 2906,
+            'top' => 1245,
+            'bottom' => 2594
+        ];
+        $this->assertEquals($expected, $bounds);
+    }
+
+    public function testOnSmileImage()
+    {
+        $image = imagecreatefromjpeg($this->imgPath . '/smile.jpg');
+        $width = imagesx($image);
+        $height = imagesy($image);
+
+        $start = microtime(true);
+
+        $bounds = $this->trimmer->getBounds($image, $width, $height);
+
+        $duration = microtime(true) - $start;
+        echo $duration . "\n";
+
+        // $this->assertLessThan(0, $duration);
+
+        $expected = [
+            'left' => 42,
+            'right' => 175,
+            'top' => 16,
+            'bottom' => 183
+        ];
+        $this->assertEquals($expected, $bounds);
+    }
+
+    public function testOnSolidImage()
+    {
+        $image = imagecreatefromjpeg($this->imgPath . '/solid.jpg');
+        $width = imagesx($image);
+        $height = imagesy($image);
+
+        $start = microtime(true);
+
+        $bounds = $this->trimmer->getBounds($image, $width, $height);
+
+        $duration = microtime(true) - $start;
+        echo $duration . "\n";
+
+        // $this->assertLessThan(0, $duration);
+
+        $expected = [
+            'left' => 0,
+            'right' => 10,
+            'top' => 0,
+            'bottom' => 10
+        ];
+        $this->assertEquals($expected, $bounds);
+    }
+
+    public function testOnHelloImage()
+    {
+        $image = imagecreatefromjpeg($this->imgPath . '/hello.jpg');
+        $width = imagesx($image);
+        $height = imagesy($image);
+
+        $start = microtime(true);
+
+        $bounds = $this->trimmer->getBounds($image, $width, $height);
+
+        $duration = microtime(true) - $start;
+        echo $duration . "\n";
+
+        // $this->assertLessThan(0, $duration);
+
+        $expected = [
+            'left' => 0,
+            'right' => 500,
+            'top' => 0,
+            'bottom' => 500
         ];
         $this->assertEquals($expected, $bounds);
     }
