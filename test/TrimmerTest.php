@@ -3,8 +3,16 @@
 $rootPath = dirname(dirname(__FILE__));
 require_once $rootPath . '/Trimmer.php';
 
+/**
+ * Tests of Trimmer.
+ */
 class TrimmerTest extends PHPUnit_Framework_TestCase
 {
+    /**
+     * Path to sample images.
+     *
+     * @var string
+     */
     private $imgPath;
 
     /**
@@ -14,13 +22,24 @@ class TrimmerTest extends PHPUnit_Framework_TestCase
      */
     private $trimmer;
 
+    /**
+     * Called before each test.
+     *
+     * @return void
+     * @see PHPUnit_Framework_TestCase::setUp()
+     */
     public function setUp()
     {
         $this->imgPath = dirname(__FILE__) . '/sample_images';
         $this->trimmer = new Trimmer();
     }
 
-    public function testOnBikeImage()
+    /**
+     * Trim large image with lots of white space.
+     *
+     * @return void
+     */
+    public function testTrimBikeImage()
     {
         $image = imagecreatefromjpeg($this->imgPath . '/bike.jpg');
         $width = imagesx($image);
@@ -31,9 +50,8 @@ class TrimmerTest extends PHPUnit_Framework_TestCase
         $bounds = $this->trimmer->getImageBorderBounds($image, $width, $height);
 
         $duration = microtime(true) - $start;
-        echo $duration . "\n";
 
-        // $this->assertLessThan(0, $duration);
+        $this->assertLessThan(2, $duration, 'Trimming took too long!');
 
         $expected = [
             'left' => 176,
@@ -45,7 +63,12 @@ class TrimmerTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($expected, $bounds);
     }
 
-    public function testOnFpImage()
+    /**
+     * Trim oblong image.
+     *
+     * @return void
+     */
+    public function testTrimFpImage()
     {
         $image = imagecreatefromjpeg($this->imgPath . '/fp.jpg');
         $width = imagesx($image);
@@ -56,9 +79,8 @@ class TrimmerTest extends PHPUnit_Framework_TestCase
         $bounds = $this->trimmer->getImageBorderBounds($image, $width, $height);
 
         $duration = microtime(true) - $start;
-        echo $duration . "\n";
 
-        // $this->assertLessThan(0, $duration);
+        $this->assertLessThan(2, $duration, 'Trimming took too long!');
 
         $expected = [
             'left' => 656,
@@ -70,7 +92,12 @@ class TrimmerTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($expected, $bounds);
     }
 
-    public function testOnBoxImage()
+    /**
+     * Trim around a square.
+     *
+     * @return void
+     */
+    public function testTrimBoxImage()
     {
         $image = imagecreatefromjpeg($this->imgPath . '/box.jpg');
         $width = imagesx($image);
@@ -81,9 +108,8 @@ class TrimmerTest extends PHPUnit_Framework_TestCase
         $bounds = $this->trimmer->getImageBorderBounds($image, $width, $height);
 
         $duration = microtime(true) - $start;
-        echo $duration . "\n";
 
-        // $this->assertLessThan(0, $duration);
+        $this->assertLessThan(2, $duration, 'Trimming took too long!');
 
         $expected = [
             'left' => 1381,
@@ -95,7 +121,12 @@ class TrimmerTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($expected, $bounds);
     }
 
-    public function testOnSmileImage()
+    /**
+     * Trim a small image.
+     *
+     * @return void
+     */
+    public function testTrimSmileImage()
     {
         $image = imagecreatefromjpeg($this->imgPath . '/smile.jpg');
         $width = imagesx($image);
@@ -106,9 +137,8 @@ class TrimmerTest extends PHPUnit_Framework_TestCase
         $bounds = $this->trimmer->getImageBorderBounds($image, $width, $height);
 
         $duration = microtime(true) - $start;
-        echo $duration . "\n";
 
-        // $this->assertLessThan(0, $duration);
+        $this->assertLessThan(2, $duration, 'Trimming took too long!');
 
         $expected = [
             'left' => 42,
@@ -120,7 +150,12 @@ class TrimmerTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($expected, $bounds);
     }
 
-    public function testOnSolidImage()
+    /**
+     * Trim image that is one solid color.
+     *
+     * @return void
+     */
+    public function testTrimSolidImage()
     {
         $image = imagecreatefromjpeg($this->imgPath . '/solid.jpg');
         $width = imagesx($image);
@@ -131,9 +166,8 @@ class TrimmerTest extends PHPUnit_Framework_TestCase
         $bounds = $this->trimmer->getImageBorderBounds($image, $width, $height);
 
         $duration = microtime(true) - $start;
-        echo $duration . "\n";
 
-        // $this->assertLessThan(0, $duration);
+        $this->assertLessThan(2, $duration, 'Trimming took too long!');
 
         $expected = [
             'left' => 0,
@@ -145,6 +179,11 @@ class TrimmerTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($expected, $bounds);
     }
 
+    /**
+     * Trim image with top left pixel set to non-matching color.
+     *
+     * @return void
+     */
     public function testOnHelloImage()
     {
         $image = imagecreatefromjpeg($this->imgPath . '/hello.jpg');
@@ -156,9 +195,8 @@ class TrimmerTest extends PHPUnit_Framework_TestCase
         $bounds = $this->trimmer->getImageBorderBounds($image, $width, $height);
 
         $duration = microtime(true) - $start;
-        echo $duration . "\n";
 
-        // $this->assertLessThan(0, $duration);
+        $this->assertLessThan(2, $duration, 'Trimming took too long!');
 
         $expected = [
             'left' => 0,
@@ -169,5 +207,4 @@ class TrimmerTest extends PHPUnit_Framework_TestCase
         ];
         $this->assertEquals($expected, $bounds);
     }
-
 }
