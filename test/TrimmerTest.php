@@ -28,7 +28,7 @@ class TrimmerTest extends PHPUnit_Framework_TestCase
 
         $start = microtime(true);
 
-        $bounds = $this->trimmer->getBounds($image, $width, $height);
+        $bounds = $this->trimmer->getImageBorderBounds($image, $width, $height);
 
         $duration = microtime(true) - $start;
         echo $duration . "\n";
@@ -39,7 +39,8 @@ class TrimmerTest extends PHPUnit_Framework_TestCase
             'left' => 176,
             'right' => 5015,
             'top' => 680,
-            'bottom' => 3615
+            'bottom' => 3615,
+            'trimmed' => true
         ];
         $this->assertEquals($expected, $bounds);
     }
@@ -52,7 +53,7 @@ class TrimmerTest extends PHPUnit_Framework_TestCase
 
         $start = microtime(true);
 
-        $bounds = $this->trimmer->getBounds($image, $width, $height);
+        $bounds = $this->trimmer->getImageBorderBounds($image, $width, $height);
 
         $duration = microtime(true) - $start;
         echo $duration . "\n";
@@ -63,7 +64,8 @@ class TrimmerTest extends PHPUnit_Framework_TestCase
             'left' => 656,
             'right' => 1351,
             'top' => 0,
-            'bottom' => 431
+            'bottom' => 431,
+            'trimmed' => true
         ];
         $this->assertEquals($expected, $bounds);
     }
@@ -76,7 +78,7 @@ class TrimmerTest extends PHPUnit_Framework_TestCase
 
         $start = microtime(true);
 
-        $bounds = $this->trimmer->getBounds($image, $width, $height);
+        $bounds = $this->trimmer->getImageBorderBounds($image, $width, $height);
 
         $duration = microtime(true) - $start;
         echo $duration . "\n";
@@ -87,7 +89,8 @@ class TrimmerTest extends PHPUnit_Framework_TestCase
             'left' => 1381,
             'right' => 2906,
             'top' => 1245,
-            'bottom' => 2594
+            'bottom' => 2594,
+            'trimmed' => true
         ];
         $this->assertEquals($expected, $bounds);
     }
@@ -100,7 +103,7 @@ class TrimmerTest extends PHPUnit_Framework_TestCase
 
         $start = microtime(true);
 
-        $bounds = $this->trimmer->getBounds($image, $width, $height);
+        $bounds = $this->trimmer->getImageBorderBounds($image, $width, $height);
 
         $duration = microtime(true) - $start;
         echo $duration . "\n";
@@ -111,7 +114,8 @@ class TrimmerTest extends PHPUnit_Framework_TestCase
             'left' => 42,
             'right' => 175,
             'top' => 16,
-            'bottom' => 183
+            'bottom' => 183,
+            'trimmed' => true
         ];
         $this->assertEquals($expected, $bounds);
     }
@@ -124,7 +128,7 @@ class TrimmerTest extends PHPUnit_Framework_TestCase
 
         $start = microtime(true);
 
-        $bounds = $this->trimmer->getBounds($image, $width, $height);
+        $bounds = $this->trimmer->getImageBorderBounds($image, $width, $height);
 
         $duration = microtime(true) - $start;
         echo $duration . "\n";
@@ -135,7 +139,8 @@ class TrimmerTest extends PHPUnit_Framework_TestCase
             'left' => 0,
             'right' => 10,
             'top' => 0,
-            'bottom' => 10
+            'bottom' => 10,
+            'trimmed' => false
         ];
         $this->assertEquals($expected, $bounds);
     }
@@ -148,7 +153,7 @@ class TrimmerTest extends PHPUnit_Framework_TestCase
 
         $start = microtime(true);
 
-        $bounds = $this->trimmer->getBounds($image, $width, $height);
+        $bounds = $this->trimmer->getImageBorderBounds($image, $width, $height);
 
         $duration = microtime(true) - $start;
         echo $duration . "\n";
@@ -159,7 +164,8 @@ class TrimmerTest extends PHPUnit_Framework_TestCase
             'left' => 0,
             'right' => 500,
             'top' => 0,
-            'bottom' => 500
+            'bottom' => 500,
+            'trimmed' => false
         ];
         $this->assertEquals($expected, $bounds);
     }

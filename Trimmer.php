@@ -1,11 +1,59 @@
 <?php
-
+/**
+ * Trims single color border off of an image using GD methods.
+ */
 class Trimmer
 {
 
-    public function getBounds($image, $width, $height, $red = 255, $green = 255, $blue = 255)
+    /**
+     * Trim a single color border off of an image.
+     *
+     * @param resource $image  GD image object.
+     * @param integer  $width  Width of image.
+     * @param integer  $height Height of image.
+     * @param integer  $red    Red value of color to trim.
+     * @param integer  $green  Green value of color to trim.
+     * @param integer  $blue   Blue value of color to trim.
+     *
+     * @return resource Trimmed image.
+     */
+    public function trimImageBorder($image, $width, $height, $red = 255, $green = 255, $blue = 255)
+    {
+        $bounds = $this->getImageBorderBounds($image, $width, $height, $red, $green, $blue);
+
+        if ($bounds['trimmed'] == false) {
+            return $image;
+        }
+
+        $top = $bounds['top'];
+        $left = $bounds['left'];
+        $width = 1 + $bounds['right'] - $bounds['left'];
+        $height = 1 + $bounds['bottom'] - $bounds['top'];
+
+        return $this->cropImage($image, $top, $left, $height, $width);
+    }
+
+    /**
+     * Get bounds of content with a single color border.
+     *
+     * @param resource $image  GD image object.
+     * @param integer  $width  Width of image.
+     * @param integer  $height Height of image.
+     * @param integer  $red    Red value of color to trim.
+     * @param integer  $green  Green value of color to trim.
+     * @param integer  $blue   Blue value of color to trim.
+     *
+     * @return array
+     */
+    public function getImageBorderBounds($image, $width, $height, $red = 255, $green = 255, $blue = 255)
     {
         $colorToTrim = imagecolorexact($image, $red, $green, $blue);
+        $originalBounds = [
+            'left' => 0,
+            'right' => $width,
+            'top' => 0,
+            'bottom' => $height,
+        ];
 
         /**
          * Compare pixel at x, y match the color to trim.
@@ -24,12 +72,8 @@ class Trimmer
         // Fast path to avoid unnecessary work.
         // If top left pixel doesn't match color to trim, return full image bounds.
         if(! $matchesColorToTrim(0, 0)) {
-            return [
-                'left' => 0,
-                'right' => $width,
-                'top' => 0,
-                'bottom' => $height
-            ];
+            $originalBounds['trimmed'] = false;
+            return $originalBounds;
         }
 
         /**
@@ -76,7 +120,50 @@ class Trimmer
         $bounds['top'] = $this->findLowBound($height, $height, $matchAtY);
         $bounds['bottom'] = $this->findHighBound($height, $height, $matchAtY);
 
+        if ($bounds == $originalBounds) {
+            $bounds['trimmed'] = false;
+        } else {
+            $bounds['trimmed'] = true;
+        }
+
         return $bounds;
+    }
+
+    /**
+     * Crop an image.
+     *
+     * @param resource $image  GD image object.
+     * @param integer  $top    Y coordinate of top.
+     * @param integer  $left   X coordinate of left.
+     * @param integer  $height Height to crop to.
+     * @param integer  $width  Width to crop to.
+     *
+     * @return resource Cropped image.
+     */
+    public function cropImage($image, $top, $left, $height, $width)
+    {
+        // Create the new image.
+        $trimmedImage = imagecreatetruecolor($width, $height);
+
+        // Allocate a color to fill image with.
+        $bgColor = imagecolorallocate($trimmedImage, 255, 255, 255);
+
+        // Fill image with color.
+        imagefill($trimmedImage, 0, 0, $bgColor);
+
+        // Copy section of old image on to new image.
+        imagecopy(
+            $trimmedImage,
+            $image,
+            0,
+            0,
+            $left,
+            $top,
+            $width,
+            $height
+        );
+
+        return $trimmedImage;
     }
 
     /**
