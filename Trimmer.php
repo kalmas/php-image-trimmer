@@ -5,56 +5,25 @@ class Trimmer
 
     public function getBounds($image, $width, $height, $red = 255, $green = 255, $blue = 255)
     {
-        $bgColor = imagecolorexact($image, $red, $green, $blue);
+        $colorToTrim = imagecolorexact($image, $red, $green, $blue);
 
-        $this->image = $image;
-        $this->actualWidth = $width;
-        $this->actualHeight = $height;
-        $this->bgColor = $bgColor;
-
-        $test = function ($x, $y) use ($image, $bgColor)
+        /**
+         * Compare pixel at x, y match the color to trim.
+         *
+         * @param integer $x X coordinate.
+         * @param integer $y Y coordinate.
+         *
+         * @return boolean True if matches.
+         */
+        $matchesColorToTrim = function ($x, $y) use ($image, $colorToTrim)
         {
             $color = imagecolorat($image, $x, $y);
-            return $color == $bgColor;
+            return $color == $colorToTrim;
         };
 
-        $testAtX = function ($x, $interval) use ($test, $height)
-        {
-            for ($y = $interval; $y < $height; $y = $y + $interval) {
-              if (! $test($x, $y)) {
-                return false;
-              }
-            }
-
-            return true;
-        };
-
-        $testAtY = function ($y, $interval) use ($test, $width)
-        {
-            for ($x = $interval; $x < $width; $x = $x + $interval) {
-              if (! $test($x, $y)) {
-                return false;
-              }
-            }
-
-            return true;
-        };
-
-        $matchFunc = function ($location, $rangeMax, $testAtLocationFunc)
-        {
-            // Sample fifths.
-            if (! $testAtLocationFunc($location, ceil($rangeMax / 5))) {
-              return false;
-            }
-
-            if (! $testAtLocationFunc($location, ceil($rangeMax / 300))) {
-                return false;
-            }
-
-            return true;
-        };
-
-        if(! $test(0, 0)) {
+        // Fast path to avoid unnecessary work.
+        // If top left pixel doesn't match color to trim, return full image bounds.
+        if(! $matchesColorToTrim(0, 0)) {
             return [
                 'left' => 0,
                 'right' => $width,
@@ -63,57 +32,157 @@ class Trimmer
             ];
         }
 
+        /**
+         * Compare pixels along vertical line to the color to trim.
+         *
+         * @param integer $x        X coordinate.
+         * @param integer $interval Number of pixels to skip between checks.
+         *
+         * @return boolean True if all match.
+         */
+        $matchAtX = function ($x, $interval) use ($matchesColorToTrim, $height)
+        {
+            for ($y = $interval; $y < $height; $y = $y + $interval) {
+              if (! $matchesColorToTrim($x, $y)) {
+                return false;
+              }
+            }
+
+            return true;
+        };
+
+        /**
+         * Compare pixels along horizontal line to the color to trim.
+         *
+         * @param integer $y        Y coordinate.
+         * @param integer $interval Number of pixels to skip between checks.
+         *
+         * @return boolean True if all match.
+         */
+        $matchAtY = function ($y, $interval) use ($matchesColorToTrim, $width)
+        {
+            for ($x = $interval; $x < $width; $x = $x + $interval) {
+              if (! $matchesColorToTrim($x, $y)) {
+                return false;
+              }
+            }
+
+            return true;
+        };
+
         $bounds = [];
-        $bounds['left'] = $this->getLow($width, $height, $matchFunc, $testAtX);
-        $bounds['right'] = $this->getHigh($width, $height, $matchFunc, $testAtX);
-        $bounds['top'] = $this->getLow($height, $height, $matchFunc, $testAtY);
-        $bounds['bottom'] = $this->getHigh($height, $height, $matchFunc, $testAtY);
+        $bounds['left'] = $this->findLowBound($width, $height, $matchAtX);
+        $bounds['right'] = $this->findHighBound($width, $height, $matchAtX);
+        $bounds['top'] = $this->findLowBound($height, $height, $matchAtY);
+        $bounds['bottom'] = $this->findHighBound($height, $height, $matchAtY);
 
         return $bounds;
     }
 
-
-    private function getLow($max, $otherMax, $matchFunc, $testAtLocationFunc)
+    /**
+     * Test if line intersecting given point matches color to trim.
+     *
+     * The logic here is the product of trial-and-error, it is ripe for further
+     * optimization if you're feeling clever.
+     *
+     * @param integer  $location        Location on axis.
+     * @param integer  $range           Range of intersecting line.
+     * @param callable $matchAtLocation Function to use to match on intersecting line.
+     *
+     * @return boolean True if matches.
+     */
+    private function sampleIntersectingLine($location, $range, $matchAtLocation)
     {
-        $distance = $max / 2;
-        $loc = $distance;
-        while (! $matchFunc($loc, $otherMax, $testAtLocationFunc)) {
-            if ($loc < 1) {
-                // Reached the edge.
+        // Sample at fifths first,
+        // this provides a chance to skip more intensive scan.
+        if (! $matchAtLocation($location, ceil($range / 5))) {
+            return false;
+        }
+
+        // Sample at three-hundredths, this number was picked as a pretty-good compromise between
+        // speed and accuracy.
+        if (! $matchAtLocation($location, ceil($range / 300))) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Look for boundary border color working outward from center of image along one
+     * axis toward the lower edge.
+     *
+     * Start by scanning at half the distance between center and edge,
+     * continue to scan outward by halves until the edge of the image
+     * is passed, then step back one pixel at a time until the exact boundary
+     * is found.
+     *
+     * @param integer  $range             Range of axis being checked (i.e. height or width).
+     * @param integer  $intersectingRange Range of intersecting axis.
+     * @param callable $matchAtLocation   Function to use to match at each location along axis.
+     *
+     * @return number Lower bound.
+     */
+    private function findLowBound($range, $intersectingRange, $matchAtLocation)
+    {
+        // Scan downward by halves.
+        $distance = $range / 2;
+        $location = $distance;
+        while (! $this->sampleIntersectingLine($location, $intersectingRange, $matchAtLocation)) {
+            if ($location < 1) {
+                // Reached the edge, abort.
                 return 0;
             }
 
             $distance = $distance / 2;
-            $loc = $distance;
+            $location = $distance;
         }
 
-        $loc = $loc + 1;
-        while ($matchFunc($loc, $otherMax, $testAtLocationFunc)) {
-            $loc = $loc + 1;
+        // Scan back upward in one pixel steps.
+        $location = $location + 1;
+        while ($this->sampleIntersectingLine($location, $intersectingRange, $matchAtLocation)) {
+            $location = $location + 1;
         }
 
-        return (int) floor($loc);
+        return (int) floor($location);
     }
 
-    private function getHigh($max, $otherMax, $matchFunc, $testAtLocationFunc)
+    /**
+     * Look for boundary border color working outward from center of image along one
+     * axis toward the upper edge.
+     *
+     * Start by scanning at half the distance between center and edge,
+     * continue to scan outward by halves until the edge of the image
+     * is passed, then step back one pixel at a time until the exact boundary
+     * is found.
+     *
+     * @param integer  $range             Range of axis being checked (i.e. height or width).
+     * @param integer  $intersectingRange Range of intersecting axis.
+     * @param callable $matchAtLocation   Function to use to match at each location along axis.
+     *
+     * @return number Upper bound.
+     */
+    private function findHighBound($range, $intersectingRange, $matchAtLocation)
     {
-        $distance = $max / 2;
-        $loc = $max - $distance;
-        while (! $matchFunc($loc, $otherMax, $testAtLocationFunc)) {
-            if ($loc > ($max - 1)) {
-                // Reached the edge.
-                return $max;
+        // Scan upward by halves.
+        $distance = $range / 2;
+        $location = $range - $distance;
+        while (! $this->sampleIntersectingLine($location, $intersectingRange, $matchAtLocation)) {
+            if ($location > ($range - 1)) {
+                // Reached the edge, abort.
+                return $range;
             }
 
             $distance = $distance / 2;
-            $loc = $max - $distance;
+            $location = $range - $distance;
         }
 
-        $loc = $loc - 1;
-        while ($matchFunc($loc, $otherMax, $testAtLocationFunc)) {
-            $loc = $loc - 1;
+        // Scan back downward in one pixel steps.
+        $location = $location - 1;
+        while ($this->sampleIntersectingLine($location, $intersectingRange, $matchAtLocation)) {
+            $location = $location - 1;
         }
 
-        return (int) floor($loc);
+        return (int) floor($location);
     }
 }
